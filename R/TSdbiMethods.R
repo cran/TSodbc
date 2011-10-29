@@ -1,10 +1,3 @@
-#.onLoad <- function(library, section) {
-#   require("methods")
-#   require("DBI")
-#   require("TSdbi")
-#   require("RODBC")
-#   }
-
 
 #RODBC is non-neg numeric value (or -1 for failure) with S3 class and attributes
 
@@ -40,8 +33,9 @@ setMethod("dbListTables", signature(conn="RODBC"), definition=function(conn,...)
 setMethod("dbExistsTable", signature(conn="RODBC", name="character"),
    definition=function(conn, name, ...) name %in% dbListTables(conn))
 
-##setMethod("dbExistsTable", signature(conn="TSodbcConnection", name="character"),
-##   definition=function(conn, name, ...) name %in% dbListTables(conn))
+setMethod("dbRemoveTable", signature(conn="RODBC", name="character"),
+   definition=function(conn, name, ...) {
+     if (-1 == sqlDrop(conn, name, errors = FALSE) ) FALSE else TRUE})
 
 setMethod("dbGetQuery", signature(conn="RODBC", statement="character"),
    definition=function (conn, statement, ...){
@@ -105,21 +99,24 @@ setMethod("TSconnect",   signature(drv="ODBCDriver", dbname="character"),
 
 setMethod("TSput",   signature(x="ANY", serIDs="character", con="TSodbcConnection"),
    definition= function(x, serIDs, con=getOption("TSconnection"), Table=NULL, 
-       TSdescription.=TSdescription(x), TSdoc.=TSdoc(x), TSlabel.=TSlabel(x),  
+       TSdescription.=TSdescription(x), TSdoc.=TSdoc(x), TSlabel.=TSlabel(x),
+         TSsource.=TSsource(x),  
        vintage=getOption("TSvintage"), panel=getOption("TSpanel"), ...)
  TSdbi:::TSputSQL(x, serIDs, con, Table=Table, 
-   TSdescription.=TSdescription., TSdoc.=TSdoc., TSlabel.=TSlabel., 
+   TSdescription.=TSdescription., TSdoc.=TSdoc., TSlabel.=TSlabel.,
+     TSsource.=TSsource., 
    vintage=vintage, panel=panel) )
 
 setMethod("TSget",   signature(serIDs="character", con="TSodbcConnection"),
    definition= function(serIDs, con=getOption("TSconnection"), 
        TSrepresentation=getOption("TSrepresentation"),
-       tf=NULL, start=tfstart(tf), end=tfend(tf),
-       names=NULL, TSdescription=FALSE, TSdoc=FALSE, TSlabel=FALSE,
+       tf=NULL, start=tfstart(tf), end=tfend(tf), names=NULL, 
+       TSdescription=FALSE, TSdoc=FALSE, TSlabel=FALSE, TSsource=TRUE,
        vintage=getOption("TSvintage"), panel=getOption("TSpanel"), ...)
    TSdbi:::TSgetSQL(serIDs, con, TSrepresentation=TSrepresentation,
        tf=tf, start=start, end=end,
        names=names, TSdescription=TSdescription, TSdoc=TSdoc, TSlabel=TSlabel,
+         TSsource=TSsource,
        vintage=vintage, panel=panel) )
 
 setMethod("TSdates",    signature(serIDs="character", con="TSodbcConnection"),
@@ -130,15 +127,19 @@ setMethod("TSdates",    signature(serIDs="character", con="TSodbcConnection"),
 
 setMethod("TSdescription",   signature(x="character", con="TSodbcConnection"),
    definition= function(x, con=getOption("TSconnection"), ...)
-        TSdbi:::TSdescriptionSQL(x=x, con=con) )
+        as.character(TSdbi:::TSdescriptionSQL(x=x, con=con)) )
 
 setMethod("TSdoc",   signature(x="character", con="TSodbcConnection"),
    definition= function(x, con=getOption("TSconnection"), ...)
-        TSdbi:::TSdocSQL(x=x, con=con) )
+        as.character(TSdbi:::TSdocSQL(x=x, con=con)) )
 
 setMethod("TSlabel",   signature(x="character", con="TSodbcConnection"),
    definition= function(x, con=getOption("TSconnection"), ...)
-        TSdbi:::TSlabelSQL(x=x, con=con) )
+        as.character(TSdbi:::TSlabelSQL(x=x, con=con)) )
+
+setMethod("TSsource",   signature(x="character", con="TSodbcConnection"),
+   definition= function(x, con=getOption("TSconnection"), ...)
+        TSdbi:::TSsourceSQL(x=x, con=con))
 
 setMethod("TSdelete", signature(serIDs="character", con="TSodbcConnection"),
      definition= function(serIDs, con=getOption("TSconnection"),  
@@ -157,6 +158,5 @@ setMethod("dropTStable",
    definition= function(con=NULL, Table, yesIknowWhatIamDoing=FALSE){
     if((!is.logical(yesIknowWhatIamDoing)) || !yesIknowWhatIamDoing)
       stop("See ?dropTStable! You need to know that you may be doing serious damage.")
-    if(dbExistsTable(con, Table)) dbRemoveTable(con, Table)
-    return(TRUE)
+    if(dbExistsTable(con, Table)) dbRemoveTable(con, Table) else TRUE
     } )
