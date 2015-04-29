@@ -10,6 +10,9 @@ import("RODBC") ## this should not all be needed, but parts for setClass "TSodbc
 # but RODBC has S3 classes
 ##importClassesFrom("RODBC","ODBCConnection")
 
+## not generic
+export("odbc")
+
 ## S4 Classes
 exportClasses(
    "TSodbcConnection"
@@ -21,7 +24,6 @@ exportMethods(
    "dbExistsTable",
    "dbGetQuery",
    "dbDisconnect",
-   "dbUnloadDriver",
    "TSconnect",
    "TSget",
    "TSput",
@@ -31,10 +33,6 @@ exportMethods(
    "TSlabel",
    "TSsource",
    "TSdates",
-   "TSvintages",
-   "dropTStable"
-
+   "TSvintages"
    )
 
-## S3 methods
-export("ODBC")

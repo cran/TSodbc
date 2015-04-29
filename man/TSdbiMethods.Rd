@@ -1,5 +1,7 @@
-\name{TSdbiMethods}
-\alias{TSconnect,ODBCDriver,character-method}
+\name{TSodbcMethods}
+\alias{odbc}
+
+\alias{TSconnect,odbcConnection,missing-method}
 \alias{TSget,character,TSodbcConnection-method}
 \alias{TSput,ANY,character,TSodbcConnection-method}
 \alias{TSdelete,character,TSodbcConnection-method}
@@ -10,28 +12,18 @@
 \alias{TSdates,character,TSodbcConnection-method}
 \alias{TSvintages,TSodbcConnection-method}
 
-\alias{dropTStable,RODBC,character,ANY-method}
-\alias{dropTStable,RODBC,character-method}
-
-\alias{dbDisconnect,RODBC-method}
 \alias{dbExistsTable,RODBC,character-method}
 \alias{dbRemoveTable,RODBC,character-method}
 \alias{dbGetQuery,RODBC,character-method}
 \alias{dbListTables,RODBC-method}
-\alias{dbUnloadDriver,ODBCDriver-method}
-
-\alias{ODBC}
 
 \alias{TSodbcConnection-class}
-\alias{dbObjectId-class}
-\alias{ODBCObject-class}
-\alias{ODBCDriver-class}
-\alias{ODBCConnection-class}
 
 \title{TSdbi ODBC Methods}
 \description{Methods for TSdbi ODBC time series dtabase connection.}
 \usage{
-    \S4method{TSconnect}{ODBCDriver,character}(drv, dbname, ...)
+    odbc(...)
+    \S4method{TSconnect}{odbcConnection,missing}(q, dbname, ...)
     \S4method{TSget}{character,TSodbcConnection}(serIDs, con, 
        TSrepresentation=getOption("TSrepresentation"),
        tf=NULL, start=tfstart(tf), end=tfend(tf), names=NULL, 
@@ -50,26 +42,13 @@
     \S4method{TSlabel}{character,TSodbcConnection}(x, con, ...)
     \S4method{TSsource}{character,TSodbcConnection}(x, con, ...)
     \S4method{TSvintages}{TSodbcConnection}(con)
-
-    \S4method{dropTStable}{RODBC,character,ANY}(con, Table, 
-                           yesIknowWhatIamDoing=FALSE)
-
-    \S4method{dbDisconnect}{RODBC}(conn,...)
-    \S4method{dbExistsTable}{RODBC,character}(conn, name, ...)
-    \S4method{dbRemoveTable}{RODBC,character}(conn, name, ...)
-    \S4method{dbGetQuery}{RODBC,character}(conn, statement, ...)
-    \S4method{dbListTables}{RODBC}(conn,...)
-    \S4method{dbUnloadDriver}{ODBCDriver}(drv, ...)
-
-    \method{ODBC}{default}()
 }
 \arguments{
-    \item{drv}{A ODBCDriver.}
-    \item{dbname}{A character string indicating a database name.}
+    \item{q}{A character string indicating the query interface to use, or
+         a database connection object.}
+    \item{dbname}{The name of the database to which the connection should be
+         established, omitted if \code{q} is a database connection object.}
     \item{con}{A database connection.}
-    \item{conn}{A database connection.}
-    \item{name}{A database table.}
-    \item{statement}{Character string with an SQL statement.}
     \item{serIDs}{identifiers for series to extract.}
     \item{x}{data series to put on the database, or a series identifier for
        TSdescription and TSdoc.}
@@ -94,7 +73,6 @@
     	necessary if it cannot be determined automatically).}
     \item{vintage}{Vintage to be supplied (if supported by db).}
     \item{panel}{Panel to be supplied (if supported by db).}
-    \item{yesIknowWhatIamDoing}{logical to help prevent accidents.}
     \item{...}{Arguments passed to other methods.}
 }
 \value{depends.}
@@ -116,11 +94,11 @@ will not be removed. These steps are done in the example below.
 }
 \examples{
     require("tfplot")
-    conInit <- try(odbcConnect(dsn=="test"))
-    if(! inherits(conInit, "try-error")) {
-      require("TSsql")
-      createTSdbTables(conInit, index=FALSE)
-      con <- TSconnect("ODBC", dbname="test")
+    \dontrun{
+      require("RODBC")
+      setup <- RODBC::odbcConnect(dsn="test")
+      TSsql::createTSdbTables(setup, index=FALSE)
+      con <- TSconnect("odbc", dbname="test")
       z <- ts(rnorm(100), start=c(1975,1), frequency=12)
       seriesNames(z) <- "random1"
       if(TSexists("random1", con)) TSreplace(z, con) else
@@ -145,27 +123,7 @@ will not be removed. These steps are done in the example below.
       TSmeta("random2")
       TSdelete("random1", con)
       TSdelete("random2")
-       \dontshow{removeTSdbTables(con, yesIknowWhatIamDoing=TRUE)} 
-      dbDisconnect(con)
-      }
-    con <- try(TSconnect("ODBC", dbname="ets"))
-    if(! inherits(con, "try-error")) {
-      TSmeta("B103", con)
-      z1 <- TSget("B103", con)
-      tfplot(z1)
-      z2 <- TSget(c("B103", "B104"), con)
-      tfplot(z2)
-      options(TSconnection=con)
-      TSmeta("B103")
-      z2 <- TSget(c("B103","B104"))
-      TSmeta(z2)
-      TSdates("D1", con)
-      TSdates("B103", con)
-      TSdates(c("D1","B103","B104"), con)
-      z <- TSdates(c("D1","B103","B104"))
-      print(z)
-      start(z)
-      end(z)
+      TSsql::removeTSdbTables(con, yesIknowWhatIamDoing=TRUE)
       dbDisconnect(con)
       }
 }
